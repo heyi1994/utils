@@ -24,19 +24,20 @@ public class CenterImageSpan extends ImageSpan {
     @Override
     public int getSize(Paint paint, CharSequence text,
                        int start, int end,
-                       Paint.FontMetricsInt fm) {
-        Drawable d = getCachedDrawable();
-        Rect rect = d.getBounds();
+                       Paint.FontMetricsInt fontMetricsInt) {
+        Drawable drawable = getDrawable();
+        Rect rect = drawable.getBounds();
+        if (fontMetricsInt != null) {
+            Paint.FontMetricsInt fmPaint = paint.getFontMetricsInt();
+            int fontHeight = fmPaint.descent - fmPaint.ascent;
+            int drHeight = rect.bottom - rect.top;
+            int centerY = fmPaint.ascent + fontHeight / 2;
 
-        if (fm != null) {
-            Paint.FontMetricsInt pfm = paint.getFontMetricsInt();
-            // keep it the same as paint's fm
-            fm.ascent = pfm.ascent;
-            fm.descent = pfm.descent;
-            fm.top = pfm.top;
-            fm.bottom = pfm.bottom;
+            fontMetricsInt.ascent = centerY - drHeight / 2;
+            fontMetricsInt.top = fontMetricsInt.ascent;
+            fontMetricsInt.bottom = centerY + drHeight / 2;
+            fontMetricsInt.descent = fontMetricsInt.bottom;
         }
-
         return rect.right;
     }
 
@@ -44,17 +45,14 @@ public class CenterImageSpan extends ImageSpan {
     public void draw( Canvas canvas, CharSequence text,
                      int start, int end, float x,
                      int top, int y, int bottom,  Paint paint) {
-        Drawable b = getCachedDrawable();
+        Drawable drawable = getDrawable();
         canvas.save();
-
-        int drawableHeight = b.getIntrinsicHeight();
-        int fontAscent = paint.getFontMetricsInt().ascent;
-        int fontDescent = paint.getFontMetricsInt().descent;
-        int transY = bottom - b.getBounds().bottom +  // align bottom to bottom
-                (drawableHeight - fontDescent + fontAscent) / 2;  // align center to center
-
+        Paint.FontMetricsInt fmPaint = paint.getFontMetricsInt();
+        int fontHeight = fmPaint.descent - fmPaint.ascent;
+        int centerY = y + fmPaint.descent - fontHeight / 2;
+        int transY = centerY - (drawable.getBounds().bottom - drawable.getBounds().top) / 2;
         canvas.translate(x, transY);
-        b.draw(canvas);
+        drawable.draw(canvas);
         canvas.restore();
     }
 
